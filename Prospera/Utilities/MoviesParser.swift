@@ -7,11 +7,14 @@
 
 import Foundation
 
+// Alias for JSON Object as a Dictionary
+typealias JSONObject = [AnyHashable: Any]
+
+// Alias for JSON Array as an Array of dictionaries
+typealias JSONArray = [JSONObject]
+
+// Struct that responsible for parsing movies with basic inforamtion from remote server's data
 struct MoviesParser: Parseable {
-    
-    private typealias JSONObject = [AnyHashable: Any]
-    private typealias JSONArray = [JSONObject]
-    
     typealias T = [Movie]
     
     func parse(from data: Data) throws -> [Movie] {

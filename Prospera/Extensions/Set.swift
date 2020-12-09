@@ -6,3 +6,10 @@
 //
 
 import Foundation
+
+// Extension for adding functionality for converting Set to Array
+extension Set {
+    func toArray() -> [Element] {
+        return Array(self)
+    }
+}

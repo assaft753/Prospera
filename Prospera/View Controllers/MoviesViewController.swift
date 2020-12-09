@@ -7,8 +7,10 @@
 
 import UIKit
 
+// View Controller that responsible for presenting the movies that searched
 class MoviesViewController: UIViewController {
     
+    // MARK:- Properties
     @IBOutlet private weak var moviesTableView: UITableView!
     @IBOutlet private weak var noMoviesStack: UIStackView!
     
@@ -34,9 +36,15 @@ class MoviesViewController: UIViewController {
     
     private var searchBarInputBoundTimer: Timer?
     
+    // MARK:- View Controller Life-Cycle methods
     override func viewDidLoad() {
         super.viewDidLoad()
         setupViews()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(true)
+        navigationController?.navigationBar.prefersLargeTitles = true
     }
     
     override func viewWillLayoutSubviews() {
@@ -44,6 +52,7 @@ class MoviesViewController: UIViewController {
         setupMoviesSearchController()
     }
     
+    // MARK:- Methods
     private func setupViews() {
         setupMoviesTableView()
         setupSpinnerView()
@@ -116,16 +125,23 @@ class MoviesViewController: UIViewController {
             MovieService.shared.fetchMovieBy(movieId: movie.movieId) { [weak self] informativeMovie in
                 DispatchQueue.main.async {
                     self?.dismisssOverlayAlertWithSpinner {
-                        print(informativeMovie)
+                        guard let informativeMovie = informativeMovie else {
+                            return
+                        }
+                        
+                        self?.pushToMovieDetails(with: informativeMovie)
                     }
                 }
             }
-            
         }
     }
     
     private func pushToMovieDetails(with informativeMovie: InformativeMovie) {
-        navigationController?.pushViewController(<#T##viewController: UIViewController##UIViewController#>, animated: true)
+        let movieDetailsViewController = initStoryboardViewController(with: MovieDetailsViewController.identifier) as! MovieDetailsViewController
+        
+        movieDetailsViewController.informativeMovie = informativeMovie
+        
+        navigationController?.pushViewController(movieDetailsViewController, animated: true)
     }
     
     private func showOverlayAlertWithSpinner(completion: @escaping () -> Void) {
@@ -145,8 +161,15 @@ class MoviesViewController: UIViewController {
     private func dismisssOverlayAlertWithSpinner(completion: @escaping () -> Void) {
         navigationController?.dismiss(animated: true, completion: completion)
     }
+    
+    private func initStoryboardViewController(with identifier: String) -> UIViewController {
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        let viewController = storyboard.instantiateViewController(withIdentifier: identifier)
+        return viewController
+    }
 }
 
+// Extension for the search bar events
 extension MoviesViewController: UISearchBarDelegate {
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         searchBarInputBoundTimer?.invalidate()
@@ -161,12 +184,15 @@ extension MoviesViewController: UISearchBarDelegate {
                     }
                 }
             } else {
-                self?.movies = []
+                DispatchQueue.main.async {
+                    self?.movies = []
+                }
             }
         }
     }
 }
 
+// Extension for the movies table view information
 extension MoviesViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return movies.count
@@ -194,13 +220,13 @@ extension MoviesViewController: UITableViewDelegate, UITableViewDataSource {
     }
 }
 
+// Extension for setting a favorite movie events
 extension MoviesViewController: MovieFavoriteable {
     func addFavoriteMovie(with movieId: String) {
         if let movie = movies.filter({ $0.movieId == movieId }).first {
             movie.isFavorite = true
         }
         MovieService.shared.addMovieToFavorites(movieId)
-        
     }
     
     func removeFavoriteMovie(with movieId: String) {
@@ -208,7 +234,6 @@ extension MoviesViewController: MovieFavoriteable {
             movie.isFavorite = false
         }
         MovieService.shared.removeMovieFromFavorites(movieId)
-        print(MovieService.shared.get()) // DELETE!!!!
     }
     
     

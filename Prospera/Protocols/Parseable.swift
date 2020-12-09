@@ -6,3 +6,12 @@
 //
 
 import Foundation
+
+// Protocol for parsing movies
+protocol Parseable {
+    
+    // the generic way
+    associatedtype T
+    
+    func parse(from data: Data) throws -> T
+}
